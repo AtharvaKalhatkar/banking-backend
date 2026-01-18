@@ -1,0 +1,38 @@
+
+
+atharva@bank.com
+password123
+820206258762
+Atharva Ac no 
+
+
+Admin Login 
+
+{
+  "email": "admin@bank.com",
+  "password": "admin123"
+}
+
+
+{
+  "accountNumber": "PASTE_YOUR_ACCOUNT_NUMBER",
+  "question": "How much did I spend today?"
+}
+
+
+Goal Creation 
+{
+  "accountNumber": "PASTE_ATHARVA_ACCOUNT_NUMBER",
+  "goalName": "iPhone 15",
+  "targetAmount": 80000
+}
+
+
+
+227320017537
+
+
+
+202757568043
+
+793530778326

@@ -1,0 +1,96 @@
+@baseUrl = http://localhost:8080
+
+# ==============================================================================
+# 🔑 AUTHENTICATION & SETUP (DO THIS FIRST)
+# ==============================================================================
+
+# 1. ADMIN LOGIN
+# Copy the token from response and paste it below into @adminToken
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@bank.com",
+  "password": "admin123"
+}
+
+###
+# 🟢 PASTE ADMIN TOKEN HERE
+@adminToken = PASTE_ADMIN_TOKEN_HERE
+
+###
+
+# 2. USER LOGIN (ATHARVA)
+# Copy the token from response and paste it below into @userToken
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "rahul@bank.com",
+  "password": "password123"
+}
+
+###
+# 🔵 PASTE USER TOKEN HERE
+@userToken = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJyYWh1bEBiYW5rLmNvbSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzY4MzY4OTAyLCJleHAiOjE3Njg0MDQ5MDJ9.eZ5T8GtZVRIp5xQOH9shoX1270i8l1hA8YkuASVoexA
+
+
+# ==============================================================================
+# 🛡️ ADMIN ACTIONS (Use @adminToken)
+# ==============================================================================
+
+### 3. ADMIN DASHBOARD (See all users & statuses)
+GET {{baseUrl}}/api/admin/dashboard
+Authorization: Bearer {{adminToken}}
+
+###
+
+### 4. GET ALL USERS (Raw List)
+GET {{baseUrl}}/api/admin/users
+Authorization: Bearer {{adminToken}}
+
+
+# ==============================================================================
+# 👤 USER ACTIONS (Use @userToken)
+# ==============================================================================
+
+### 5. REGISTER NEW USER (RAHUL)
+# Note: You still need to manually login as Rahul if you want to perform actions as him.
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Ajay Sharma",
+  "email": "Ajay@bank.com",
+  "password": "password123",
+  "role": "USER",
+  "phoneNumber": "8390768833"
+}
+
+###
+
+### 6. CREATE BANK ACCOUNT (For Atharva - ID 1)
+# Note: Check the dashboard to confirm your User ID first.
+POST {{baseUrl}}/api/accounts/create/1
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+###
+
+### 7. DEPOSIT MONEY (Atharva)
+# Replace '1234567890' with Atharva's actual account number from Step 3/6.
+POST {{baseUrl}}/api/transactions/deposit
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "accountNumber": "YOUR_ACCOUNT_NUMBER_HERE",
+  "amount": 5000.00
+}
+
+###
+
+### 8. CHECK MY TRANSACTION HISTORY
+# Replace with actual account number.
+GET {{baseUrl}}/api/transactions/history/YOUR_ACCOUNT_NUMBER_HERE
+Authorization: Bearer {{userToken}}
