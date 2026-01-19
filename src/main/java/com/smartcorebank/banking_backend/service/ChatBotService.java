@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class ChatBotService {
@@ -14,63 +16,77 @@ public class ChatBotService {
     private TransactionRepository transactionRepository;
 
     public String processQuery(String accountNumber, String question) {
-        String lowerCaseQuestion = question.toLowerCase();
+        String query = question.toLowerCase();
 
-        // 1. COMPARISON: "Today vs Yesterday"
-        if (lowerCaseQuestion.contains("vs") || lowerCaseQuestion.contains("compare")) {
+        // 1. Handle Comparison (Today vs Yesterday)
+        if (query.contains("vs") || query.contains("compare")) {
             return handleComparison(accountNumber);
         }
 
-        // 2. SIMPLE TIME QUERIES
-        LocalDateTime start;
-        LocalDateTime end = LocalDateTime.now();
-        String label;
-
-        if (lowerCaseQuestion.contains("today")) {
-            start = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS); // Midnight Today
-            label = "today";
-        } else if (lowerCaseQuestion.contains("yesterday")) {
-            start = LocalDateTime.now().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS); // Midnight Yesterday
-            end = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS); // Midnight Today (Stop counting)
-            label = "yesterday";
-        } else if (lowerCaseQuestion.contains("week")) {
-            start = LocalDateTime.now().minus(7, ChronoUnit.DAYS);
-            label = "this week";
-        } else if (lowerCaseQuestion.contains("month")) {
-            start = LocalDateTime.now().minus(30, ChronoUnit.DAYS);
-            label = "this month";
-        } else {
-            return "I didn't understand. Try asking about 'today', 'yesterday', or 'vs'.";
+        // 2. Handle Dynamic Day Queries (e.g., "last 5 days", "10 days")
+        Pattern dayPattern = Pattern.compile("(\\d+)\\s*days?");
+        Matcher matcher = dayPattern.matcher(query);
+        if (matcher.find()) {
+            int days = Integer.parseInt(matcher.group(1));
+            return getTimedSpending(accountNumber, days, "the last " + days + " days");
         }
 
-        Double spent = getSpending(accountNumber, start, end);
-        return "You spent ₹" + spent + " " + label + ".";
+        // 3. Handle Standard Time Labels
+        if (query.contains("today")) {
+            return getTimedSpending(accountNumber, 0, "today");
+        } else if (query.contains("yesterday")) {
+            return getYesterdaySpending(accountNumber);
+        } else if (query.contains("last week") || query.contains("7 days")) {
+            return getTimedSpending(accountNumber, 7, "the last week");
+        } else if (query.contains("this week")) {
+            // "This week" usually means from last Monday, but we'll use 7 days for consistency
+            return getTimedSpending(accountNumber, 7, "this week");
+        } else if (query.contains("month") || query.contains("30 days")) {
+            return getTimedSpending(accountNumber, 30, "this month");
+        }
+
+        return "I didn't quite get that. You can ask 'How much did I spend in the last 5 days?' or 'Compare today vs yesterday'.";
     }
 
-    // Helper logic for Comparison
+    private String getTimedSpending(String acc, int days, String label) {
+        LocalDateTime start = LocalDateTime.now().minusDays(days).truncatedTo(ChronoUnit.DAYS);
+        LocalDateTime end = LocalDateTime.now();
+        
+        // If it's just "today", we only look from midnight today
+        if (days == 0) {
+            start = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS);
+        }
+
+        Double spent = transactionRepository.calculateSpendingInRange(acc, start, end);
+        return "You spent ₹" + String.format("%.2f", (spent == null ? 0.0 : spent)) + " " + label + ".";
+    }
+
+    private String getYesterdaySpending(String acc) {
+        LocalDateTime start = LocalDateTime.now().minusDays(1).truncatedTo(ChronoUnit.DAYS);
+        LocalDateTime end = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS);
+        Double spent = transactionRepository.calculateSpendingInRange(acc, start, end);
+        return "You spent ₹" + String.format("%.2f", (spent == null ? 0.0 : spent)) + " yesterday.";
+    }
+
     private String handleComparison(String accountNumber) {
-        // Calculate Today
         LocalDateTime startToday = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS);
         Double spentToday = getSpending(accountNumber, startToday, LocalDateTime.now());
 
-        // Calculate Yesterday
         LocalDateTime startYesterday = startToday.minus(1, ChronoUnit.DAYS);
         Double spentYesterday = getSpending(accountNumber, startYesterday, startToday);
 
-        String result = "Today: ₹" + spentToday + " | Yesterday: ₹" + spentYesterday + ". ";
+        String result = "Today: ₹" + String.format("%.2f", spentToday) + " | Yesterday: ₹" + String.format("%.2f", spentYesterday) + ". ";
 
         if (spentToday > spentYesterday) {
-            result += "You spent ₹" + (spentToday - spentYesterday) + " more today.";
+            result += "You spent ₹" + String.format("%.2f", (spentToday - spentYesterday)) + " more today.";
         } else if (spentYesterday > spentToday) {
-            result += "You spent ₹" + (spentYesterday - spentToday) + " less today. Good job!";
+            result += "You spent ₹" + String.format("%.2f", (spentYesterday - spentToday)) + " less today. Well done!";
         } else {
-            result += "Your spending is exactly the same.";
+            result += "Your spending is consistent with yesterday.";
         }
-        
         return result;
     }
 
-    // Database Helper
     private Double getSpending(String account, LocalDateTime start, LocalDateTime end) {
         Double val = transactionRepository.calculateSpendingInRange(account, start, end);
         return (val == null) ? 0.0 : val;

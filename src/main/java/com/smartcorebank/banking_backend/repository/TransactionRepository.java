@@ -12,21 +12,18 @@ import java.util.List;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
-    // ✅ 1. HISTORY (Needed by TransactionService & HealthService)
+    // 1. History (Finds transactions where you are SENDER OR RECEIVER)
     List<Transaction> findBySourceAccountNumberOrTargetAccountNumberOrderByTimestampDesc(String sourceAccount, String targetAccount);
 
-    // ✅ 2. CHATBOT: Total Spent (Fixes ChatBotService Error)
+    // 2. CHATBOT: Calculate Total Spent
     @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.sourceAccountNumber = :accountNumber AND t.timestamp >= :startDate")
     Double calculateTotalSpent(@Param("accountNumber") String accountNumber, @Param("startDate") LocalDateTime startDate);
 
-    // ✅ 3. CHATBOT: Spending Range (Fixes the Red Line in your Screenshot)
+    // 3. ANALYTICS: Spending in a specific range
     @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.sourceAccountNumber = :accountNumber AND t.timestamp BETWEEN :startDate AND :endDate")
     Double calculateSpendingInRange(@Param("accountNumber") String accountNumber, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-   // ✅ 4. PDF STATEMENT: Checks OLD (from/to) AND NEW (source/target) columns
-    @Query("SELECT t FROM Transaction t WHERE " +
-           "(t.sourceAccountNumber = :accountNumber OR t.targetAccountNumber = :accountNumber OR " +
-           " t.fromAccountNumber = :accountNumber OR t.toAccountNumber = :accountNumber) " +
-           "AND t.timestamp BETWEEN :startDate AND :endDate ORDER BY t.timestamp DESC")
+    // 4. PDF STATEMENT: Get full list for a date range
+    @Query("SELECT t FROM Transaction t WHERE (t.sourceAccountNumber = :accountNumber OR t.targetAccountNumber = :accountNumber) AND t.timestamp BETWEEN :startDate AND :endDate ORDER BY t.timestamp DESC")
     List<Transaction> findForStatement(@Param("accountNumber") String accountNumber, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }
