@@ -1,0 +1,68 @@
+KFpxD4AYi6pNUJMR
+
+
+mongodb+srv://atharva8552_db_user:KFpxD4AYi6pNUJMR@smartcore-bank.4o6o4q0.mongodb.net/?appName=smartcore-bank
+
+
+69629409b66daef4e305493f
+
+
+{
+    "accountNumber": "b1025592-c",
+    "balance": 0.0,
+    "id": "696296ae085a5fa3394f4fc4",
+    "status": "ACTIVE",
+    "userId": "69629409b66daef4e305493f"
+}
+
+
+New user registration 
+
+http://localhost:8081/api/users/register
+
+{
+  "name": "Rahul Sharma",
+  "email": "rahul.sharma@test.com",
+  "password": "rahul123",
+  "userType": "STUDENT"
+}
+
+
+
+{
+    "email": "atharva01@test.com",
+    "id": "69629ae6085a5fa3394f4fc7",
+    "name": "Atharva bharat kalhatkar",
+    "password": "atharva123",
+    "userType": "STUDENT"
+}
+
+{
+    "accountNumber": "756268495836",
+    "balance": 0.0,
+    "id": "69629b2fb1b59a21488aed2e",
+    "status": "ACTIVE",
+    "userId": "69629ae6085a5fa3394f4fc7"
+}
+
+
+POST http://localhost:8081/api/accounts/create/{newUserId}
+
+{
+    "email": "rahul.sharma@test.com",
+    "id": "6962991b085a5fa3394f4fc5",
+    "name": "Rahul Sharma",
+    "password": "rahul123",
+    "userType": "STUDENT"
+}
+
+
+
+API for Deposite 
+POST http://localhost:8081/api/transactions/deposit/582937401928/5000
+
+
+API for Withdrawl
+POST http://localhost:8081/api/transactions/withdraw/582937401928/2000
+
+
